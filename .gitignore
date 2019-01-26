@@ -19,3 +19,9 @@ obj/
 .opk_data
 PicoDrive
 PicoDrive.opk
+*.md
+*.gcda
+*.so
+PicoDrive
+*.log
+run.dge

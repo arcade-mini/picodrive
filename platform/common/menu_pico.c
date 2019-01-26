@@ -1101,7 +1101,7 @@ void menu_loop(void)
 	if (PicoGameLoaded) {
 		if (engineState == PGS_Menu)
 			engineState = PGS_Running;
-		/* wait until menu, ok, back is released */
+
 		while (in_menu_wait_any(NULL, 50) & (PBTN_MENU|PBTN_MOK|PBTN_MBACK))
 			;
 	}

@@ -18,6 +18,7 @@
 #include "version.h"
 
 #include <pico/pico.h>
+#include <pico/pico_int.h>
 
 static void *shadow_fb;
 
@@ -150,6 +151,22 @@ void rgb565_to_uyvy(void *d, const void *s, int pixels)
   }
 }
 
+void Change_Resolution(uint32_t width)
+{
+	g_screen_width = width;
+	g_screen_ppitch = g_screen_width;
+	g_screen_height = (Pico.video.reg[1] & 8) ? 240 : 224;
+
+	if ((plat_sdl_screen->h != g_screen_height || plat_sdl_screen->w != g_screen_width))
+	{
+		if (engineState == PGS_Running)
+		{
+			plat_sdl_change_video_mode(g_screen_width, g_screen_height, 0);
+			plat_video_loop_prepare();
+		}	
+	}
+}
+
 void plat_video_flip(void)
 {
 	if (plat_sdl_overlay != NULL) {
@@ -180,6 +197,13 @@ void plat_video_wait_vsync(void)
 
 void plat_video_menu_enter(int is_rom_loaded)
 {
+	/* Hack to make it work, otherwise it will crash badly when playing 32 columns games like Flashback */
+	g_screen_width = 320;
+	g_screen_ppitch = 320;
+	g_screen_height = 240;
+	plat_video_loop_prepare();
+	plat_sdl_change_video_mode(g_screen_width, g_screen_height, 0);
+	/* End of Hack */
 	plat_sdl_change_video_mode(g_menuscreen_w, g_menuscreen_h, 0);
 	g_screen_ptr = shadow_fb;
 }
@@ -198,6 +222,7 @@ void plat_video_menu_begin(void)
 
 void plat_video_menu_end(void)
 {
+
 	if (plat_sdl_overlay != NULL) {
 		SDL_Rect dstrect =
 			{ 0, 0, plat_sdl_screen->w, plat_sdl_screen->h };
@@ -279,9 +304,9 @@ void plat_init(void)
 		exit(1);
 	}
 
-	g_screen_width = 320;
+	/*g_screen_width = 320;
 	g_screen_height = 240;
-	g_screen_ppitch = 320;
+	g_screen_ppitch = 320;*/
 	g_screen_ptr = shadow_fb;
 
 	in_sdl_init(&in_sdl_platform_data, plat_sdl_event_handler);

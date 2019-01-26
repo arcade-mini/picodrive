@@ -27,7 +27,7 @@
  * not handled properly:
  * - hilight op on shadow tile
  */
-
+#include <SDL/SDL.h>
 #include "pico_int.h"
 
 int (*PicoScanBegin)(unsigned int num) = NULL;
@@ -1278,26 +1278,35 @@ void PicoDoHighPal555(int sh, int line, struct PicoEState *est)
   }
 }
 
+
+extern void Change_Resolution(uint32_t width);
+
 void FinalizeLine555(int sh, int line, struct PicoEState *est)
 {
-  unsigned short *pd=est->DrawLineDest;
-  unsigned char  *ps=est->HighCol+8;
-  unsigned short *pal=est->HighPal;
-  int len;
+	unsigned short *pd=est->DrawLineDest;
+	unsigned char  *ps=est->HighCol+8;
+	unsigned short *pal=est->HighPal;
+	uint32_t len;
 
-  if (Pico.m.dirtyPal)
-    PicoDoHighPal555(sh, line, est);
+	if (Pico.m.dirtyPal)
+		PicoDoHighPal555(sh, line, est);
 
-  if (Pico.video.reg[12]&1) {
-    len = 320;
-  } else {
-    if (!(PicoIn.opt&POPT_DIS_32C_BORDER)) pd+=32;
-    len = 256;
-  }
+	if (Pico.video.reg[12]&1) 
+	{
+		len = 320;
+	} 
+	else 
+	{
+		/* No centering - Gameblabla */
+		/*if (!(PicoIn.opt&POPT_DIS_32C_BORDER)) pd+=32;*/
+		len = 256;
+	}
 
+	Change_Resolution(len);
+	
   {
 #if 1
-    int i;
+    uint32_t i;
 
     for (i = 0; i < len; i++)
       pd[i] = pal[ps[i]];
@@ -1477,7 +1486,7 @@ static int DrawDisplay(int sh)
 // MUST be called every frame
 PICO_INTERNAL void PicoFrameStart(void)
 {
-  int offs = 8, lines = 224;
+  int offs = 0, lines = 224;
 
   // prepare to do this frame
   Pico.est.rendstatus = 0;
@@ -1498,8 +1507,8 @@ PICO_INTERNAL void PicoFrameStart(void)
     rendstatus_old = Pico.est.rendstatus;
   }
 
-  Pico.est.HighCol = HighColBase + offs * HighColIncrement;
-  Pico.est.DrawLineDest = (char *)DrawLineDestBase + offs * DrawLineDestIncrement;
+  Pico.est.HighCol = HighColBase + (offs * HighColIncrement);
+  Pico.est.DrawLineDest = (char *)DrawLineDestBase + (offs * DrawLineDestIncrement);
   Pico.est.DrawScanline = 0;
   skip_next_line = 0;
 
